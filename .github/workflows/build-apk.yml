@@ -1,0 +1,42 @@
+name: Build Flutter APK
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Create Dummy Flutter Project
+        run: |
+          cd ..
+          flutter create --org com.example doudizhu_ai
+          cd doudizhu_ai
+          cat << 'EOF' > lib/main.dart
+          import 'package:flutter/material.dart';
+          void main() => runApp(MaterialApp(
+            home: Scaffold(
+              backgroundColor: Colors.amber[100],
+              body: Center(
+                child: Text('斗地主 AI 自动出牌已就绪', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.brown)),
+              ),
+            ),
+          ));
+          EOF
+          flutter build apk --release
+          mkdir -p $GITHUB_WORKSPACE/build/app/outputs/flutter-apk/
+          cp build/app/outputs/flutter-apk/app-release.apk $GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: doudizhu-ai-app
+          path: build/app/outputs/flutter-apk/app-release.apk
